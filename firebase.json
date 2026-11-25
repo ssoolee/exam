@@ -1,0 +1,7 @@
+{
+  "hosting": {
+    "site": "exam1125",
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+  }
+}

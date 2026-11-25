@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사회 단원평가 오답 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* 레이아웃: 한 손 폭의 시험지 한 장. 파란 펜(선택), 빨간 펜(오답), 형광펜(강조). */
+:root{
+  --paper:#f3f4ef; --card:#ffffff; --ink:#1b2332; --muted:#5d6878; --line:#d8dbd1;
+  --accent:#1f4fd1; --accent-ink:#ffffff; --mark:#ffe46b;
+  --ok:#0f7a57; --ok-bg:#e2f4ec; --bad:#cf362b; --bad-bg:#fbe7e4;
+  --display:"Gowun Batang","Nanum Myeongjo",serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#11151c; --card:#1a202a; --ink:#e7eaf0; --muted:#9aa4b4; --line:#2d3543;
+    --accent:#86a6ff; --accent-ink:#0d1320; --mark:#6a5a10;
+    --ok:#56d3a5; --ok-bg:#13322a; --bad:#ff8175; --bad-bg:#3a1d1b;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#11151c; --card:#1a202a; --ink:#e7eaf0; --muted:#9aa4b4; --line:#2d3543;
+  --accent:#86a6ff; --accent-ink:#0d1320; --mark:#6a5a10;
+  --ok:#56d3a5; --ok-bg:#13322a; --bad:#ff8175; --bad-bg:#3a1d1b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#app{max-width:560px;margin:0 auto;padding:20px 16px 110px;display:flex;flex-direction:column;gap:16px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:28px}
+h2{font-size:20px}
+.eyebrow{font-size:13px;color:var(--muted);letter-spacing:.04em}
+.sub{color:var(--muted);font-size:14px;margin:0}
+.hl{background:linear-gradient(transparent 55%,var(--mark) 55%)}
+
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px}
+
+.unit{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.unit .roman{font-family:var(--display);font-weight:700;font-size:26px;color:var(--accent);width:34px;text-align:center;flex:none}
+.unit .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.unit .name{font-weight:600;font-size:17px}
+.unit .meta{font-size:13px;color:var(--muted)}
+.unit .go{flex:none;color:var(--muted);font-size:20px}
+
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-bg)}
+.pill.ok{color:var(--ok);border-color:var(--ok);background:var(--ok-bg)}
+
+.btn{display:block;width:100%;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:16px;text-align:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.red{border-color:var(--bad);color:var(--bad);background:var(--bad-bg)}
+.btn.small{padding:8px 12px;font-size:14px;width:auto}
+.btn:disabled{opacity:.45;cursor:default}
+
+.opts{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 16px}
+.opts label{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;font-size:15px}
+.opts label+label{border-top:1px solid var(--line)}
+.opts input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+
+/* 문제 */
+.topbar{display:flex;align-items:center;gap:12px}
+.topbar .x{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px}
+.bar{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stem{font-size:18px;font-weight:600;line-height:1.5;margin:0}
+.passage{background:var(--card);border:1px solid var(--ink);padding:12px 14px;font-size:15px;line-height:1.75}
+.passage u{text-underline-offset:3px}
+.passage p{margin:0}
+.passage p+p{margin-top:6px}
+.bogi{position:relative;border:1px solid var(--muted);padding:16px 14px 10px;font-size:15px;margin-top:8px}
+.bogi::before{content:"보기";position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--paper);padding:0 10px;font-size:13px;font-weight:600}
+.bogi p{margin:0 0 4px;padding-left:1.4em;text-indent:-1.4em}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}
+.flow b{border:1px solid var(--muted);background:var(--card);padding:6px 10px;border-radius:6px;font-weight:500}
+.pairhead{display:flex;gap:10px;font-size:13px;color:var(--muted);padding:0 14px 0 50px}
+.pairhead span{flex:1}
+
+.choice{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;line-height:1.5;min-height:52px}
+.choice .n{flex:none;font-size:18px;line-height:1.4;color:var(--muted)}
+.choice .t{flex:1;min-width:0}
+.choice .pair{display:flex;gap:10px}
+.choice .pair span{flex:1}
+.choice .m{flex:none;font-weight:700}
+.choice.right{border-color:var(--ok);background:var(--ok-bg)}
+.choice.right .n,.choice.right .m{color:var(--ok)}
+.choice.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.choice.wrong .n,.choice.wrong .m{color:var(--bad)}
+.choice.wrong .t{text-decoration:line-through;text-decoration-color:var(--bad)}
+.choice:disabled{cursor:default;color:var(--ink);opacity:1}
+
+.fb{border-left:4px solid var(--ok);background:var(--ok-bg);padding:12px 14px;border-radius:0 10px 10px 0}
+.fb.bad{border-color:var(--bad);background:var(--bad-bg)}
+.fb strong{display:block;font-family:var(--display);font-size:18px;color:var(--ok)}
+.fb.bad strong{color:var(--bad)}
+.fb p{margin:4px 0 0;font-size:15px}
+.model{border:1px dashed var(--accent);border-radius:10px;padding:12px 14px;background:var(--card);font-size:15px}
+.model b{color:var(--accent);display:block;font-size:13px;margin-bottom:2px}
+textarea{width:100%;min-height:88px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:var(--card);color:var(--ink);resize:vertical}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.dock>div{max-width:528px;margin:0 auto;display:flex;gap:10px}
+.dock .btn.redo{flex:0 0 auto;width:auto;white-space:nowrap}
+
+/* 결과 */
+.score{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 16px;text-align:center}
+.score .big{font-family:var(--display);font-weight:700;font-size:52px;line-height:1.1;font-variant-numeric:tabular-nums}
+.score .big small{font-size:22px;color:var(--muted);font-weight:400}
+.rl{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.rl li{display:flex;gap:10px;padding:10px 14px;font-size:14px;align-items:flex-start}
+.rl li+li{border-top:1px solid var(--line)}
+.rl .o{flex:none;font-weight:700;width:18px;color:var(--ok)}
+.rl .o.x{color:var(--bad)}
+
+/* 오답노트 */
+.note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:0 14px 14px 0;padding:14px;display:flex;flex-direction:column;gap:10px}
+.note .stem{font-size:16px}
+.note details{font-size:14px}
+.note summary{color:var(--accent);font-weight:600;padding:4px 0;cursor:pointer}
+.note .passage,.note .bogi{font-size:14px;margin-top:8px}
+.note .bogi::before{background:var(--card)}
+.ans{display:flex;flex-direction:column;gap:6px;font-size:15px}
+.ans div{display:flex;gap:8px;align-items:flex-start}
+.ans .k{flex:none;width:62px;font-size:12px;font-weight:600;padding-top:3px}
+.ans .mine .k{color:var(--bad)}
+.ans .mine .v{text-decoration:line-through;text-decoration-color:var(--bad);color:var(--muted)}
+.ans .real .k{color:var(--ok)}
+.ans .real .v{font-weight:600}
+.exp{font-size:14px;color:var(--muted);margin:0;border-top:1px dashed var(--line);padding-top:8px}
+.note .foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:14px;color:var(--muted)}
+.unit-h{font-family:var(--display);font-weight:700;font-size:16px;margin:8px 0 0}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs>div{max-width:560px;margin:0 auto;display:flex}
+.tabs button{flex:1;background:none;border:0;border-top:3px solid transparent;padding:12px 8px 14px;font-weight:600;font-size:15px;color:var(--muted)}
+.tabs button[aria-current="page"]{color:var(--accent);border-top-color:var(--accent)}
+.tabs .badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:99px;background:var(--bad);color:#fff;font-size:12px;line-height:20px;font-variant-numeric:tabular-nums}
+.star{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+.star.on{background:var(--mark);border-color:var(--mark);color:var(--ink)}
+.note.fav{border-left-color:var(--accent)}
+.tabs .badge.f{background:var(--accent);color:var(--accent-ink)}
+.resume{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1.5px solid var(--accent);border-radius:14px;padding:14px 16px}
+.resume b{font-size:16px}
+@media (prefers-reduced-motion:no-preference){.bar>i{transition:width .25s}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav class="tabs" id="tabs" aria-label="메뉴"><div>
+  <button type="button" data-act="home" id="tab-home">단원 선택</button>
+  <button type="button" data-act="favs" id="tab-favs">찜<span class="badge f" id="badge-f" hidden>0</span></button>
+  <button type="button" data-act="notes" id="tab-notes">오답노트<span class="badge" id="badge" hidden>0</span></button>
+</div></nav>
+
+<script>
+"use strict";
+const UNITS=[
+  {k:"c",roman:"Ⅷ",name:"다양한 문화의 이해"},
+  {k:"d",roman:"Ⅸ",name:"민주주의와 시민"},
+  {k:"l",roman:"Ⅺ",name:"일상생활과 법"},
+  {k:"h",roman:"Ⅻ",name:"인권과 기본권"}
+];
+const N="①②③④⑤";
+const KN=["ㄱ","ㄴ","ㄷ","ㄹ"];
+const P_HAND='<p><b>갑:</b> 아직도 손으로 밥을 먹는 나라가 있다며? 우리나라처럼 젓가락을 사용해야 위생적인데, 그런 나라는 분명 미개한 나라일 거야.</p><p><b>을:</b> 인도에서는 손으로 밥을 먹는다고 하더라. 그런데 그 까닭은 남이 썼을지도 모르는 숟가락으로 밥을 먹는 것보다 자신의 손으로 먹는 것이 깨끗하다고 생각하기 때문이래. 그렇게 생각하면 이해가 되지 않아?</p>';
+const P_MULTI='<p>( ㉠ ) 사회란 다양한 인종·민족의 문화가 함께 공존하는 사회를 말하는데, 우리나라도 언어, 종교, 민족 등 배경이 서로 다른 집단의 사람을 주변에서 쉽게 만날 수 있게 되었다.</p>';
+const P_TIBET='<p>티베트에서는 조장(鳥葬)이라는 장례를 치른다. 사람이 죽으면 독수리가 사람의 살점을 뜯어 먹게 하고 남은 뼈를 갈아서 그것마저 독수리에게 먹이는 방식이다. 다른 문화권 사람들은 조장이 죽은 사람을 모욕하는 일이며 야만적인 행위라고 비난하기도 한다. 그러나 티베트의 자연환경을 고려하면 이러한 문화를 이해할 수 있다. 티베트는 매우 건조한 지역이다. 시신을 땅에 묻으면 시신은 오랫동안 썩지 않고 남아 있을 것이다. 자연스럽게 사라져야 할 것이 그대로 남아 있는 것이야말로 죽은 사람을 모욕하는 것이다.</p>';
+const P_POL='<p>학교, 지역 사회, 국가 등 다양한 공동체에서는 구성원 간 생각이나 이해관계의 차이로 갈등이 나타날 수 있다. ( ㉠ )(이)란 일상생활에서 발생하는 구성원 간 대립과 갈등을 조정하여 해결해 나가는 모든 활동을 의미한다.</p>';
+const KL=["ㄱ, ㄴ","ㄱ, ㄷ","ㄴ, ㄷ","ㄴ, ㄹ","ㄷ, ㄹ"];
+
+const Q=[
+/* ── Ⅷ 다양한 문화의 이해 ── */
+{id:"c11",u:"c",no:"11",q:"자문화 중심주의에 관한 설명으로 적절한 것은?",
+ o:["자신의 문화를 열등하게 생각한다.","우수한 외래문화의 수용을 거부한다.","자기 문화의 정체성을 상실할 수 있다.","고유문화에 자부심을 잃어버리기 쉽다.","우수한 문화와 열등한 문화를 나눌 수 없다고 본다."],a:1,
+ e:"자문화 중심주의는 자기 문화만 우수하다고 여겨 다른 문화를 낮춰 보고, 외래문화 수용을 거부하기 쉽습니다. ①③④는 문화 사대주의, ⑤는 문화 상대주의에 대한 설명입니다."},
+{id:"c12",u:"c",no:"12",q:"사례에서 공통으로 나타나는 문화를 바라보는 태도는?",
+ p:"<p>• 고대 그리스 사람은 북쪽의 유럽인을 야만인이라고 부르며 무시하였다.</p><p>• 과거 중국의 한족은 자기 민족이 세계의 중심이라고 믿고 주변 민족을 오랑캐라고 부르면서 무시하였다.</p>",
+ o:["상대주의","절대주의","문화 사대주의","문화 상대주의","자문화 중심주의"],a:4,
+ e:"두 사례 모두 자기 문화를 기준으로 다른 문화를 열등하다고 무시하므로 자문화 중심주의입니다."},
+{id:"c13",u:"c",no:"13",q:"밑줄 친 ㉠~㉣에 대한 설명 중 옳은 것은?",
+ p:"<p><u>㉠우리나라 기업에서 일하고 있는 이슬람교도인 ○○ 씨</u>는 라마단 기간이 되자 <u>㉡종교적 가르침에 따른 금식</u>을 위해 점심을 먹지 않겠다고 말했다. 같이 일하는 동료는 <u>㉢\"여기는 한국이니까 한국 문화에 적응해야 한다.\"</u>라며 점심 식사를 권유하였다. ○○ 씨가 이를 거절하자, 이를 본 다른 동료 역시 <u>㉣\"한국인은 예로부터 식사를 중시해서 금식하는 문화를 도저히 이해할 수 없다.\"</u>라며 쓴소리를 하였다.</p>",
+ o:["다문화 사회에서는 ㉠과 같은 사람을 쉽게 만날 수 없다.","㉡ 문화에 대한 ㉠의 문화 이해의 태도는 문화 사대주의이다.","㉡ 문화마저 존중하려는 태도를 극단적 문화 상대주의라고 한다.","㉢과 같은 문화 이해의 태도는 문화 사대주의이다.","㉣와 같은 문화 이해의 태도는 자문화 중심주의이다."],a:4,
+ e:"㉢과 ㉣은 모두 한국 문화를 기준으로 다른 문화를 평가하는 자문화 중심주의입니다. 금식은 인권을 해치는 문화가 아니므로 이를 존중하는 것은 극단적 문화 상대주의가 아닙니다."},
+{id:"c14",u:"c",no:"14",q:"갑과 을이 보이는 문화 이해의 태도를 바르게 연결한 것은?",p:P_HAND,head:["갑","을"],
+ o:[["문화 사대주의","문화 상대주의"],["문화 사대주의","자문화 중심주의"],["문화 상대주의","문화 사대주의"],["자문화 중심주의","문화 사대주의"],["자문화 중심주의","문화 상대주의"]],a:4,
+ e:"갑은 우리 문화를 기준으로 다른 문화를 미개하다고 보므로 자문화 중심주의, 을은 그 사회의 맥락에서 이해하려 하므로 문화 상대주의입니다."},
+{id:"c15",u:"c",no:"15",q:"을이 가진 문화 이해의 태도를 옳게 설명한 것은?",p:P_HAND,
+ o:["문화의 다양성을 저해할 수 있다.","한 문화권 내의 결속력을 강화한다.","세계화의 진전에 따라 더욱 요구된다.","문화의 주체성을 상실할 우려가 있다.","절대적인 기준에 따라 문화의 가치를 판단한다."],a:2,
+ e:"을의 태도는 문화 상대주의입니다. 세계화로 다양한 문화가 만나는 오늘날 더욱 필요한 태도입니다. ①②⑤는 자문화 중심주의, ④는 문화 사대주의와 관련됩니다."},
+{id:"c16",u:"c",no:"16",q:"밑줄 친 ㉠이 문화를 바라보는 태도를 이르는 말은?",
+ p:"<p>사회 관계망 서비스(SNS)에서 남녀평등을 주장하며 자유로운 행동으로 주목을 받았던 파키스탄 출신 여성 모델이 가족으로부터 '명예 살인'을 당하였다. 명예 살인은 일부 이슬람 국가에서 집안의 명예를 실추시켰다는 이유로 가족 구성원을 살해하는 관습이다. 이 뉴스를 본 우리나라의 한 네티즌은 <u>㉠\"인간의 존엄성을 해치는 문화라 하더라도 각 문화를 있는 그대로 존중하고 차이를 인정해야 한다.\"</u>라고 주장하였다.</p>",
+ o:["문화 사대주의","문화 상대주의","자문화 중심주의","극단적 문화 상대주의","극단적 자문화 중심주의"],a:3,
+ e:"인간의 존엄성이나 생명 같은 보편적 가치를 해치는 문화까지 무조건 인정하려는 태도는 극단적 문화 상대주의입니다."},
+{id:"c19a",u:"c",no:"19-(1)",t:"e",q:"㉠에 들어갈 말을 쓰시오.",p:P_MULTI,m:"다문화"},
+{id:"c19b",u:"c",no:"19-(2)",t:"e",q:"우리나라가 ㉠(다문화) 사회로 변화하게 된 배경을 두 가지 제시하시오.",p:P_MULTI,
+ m:"교통과 정보·통신의 발달로 국가 간의 인구 이동 증가, 미디어를 통한 교류 증가 등이 있다."},
+{id:"c20a",u:"c",no:"20-(1)",t:"e",q:"윗글에 나타난 문화 이해의 태도는 무엇인지 쓰시오.",p:P_TIBET,m:"문화 상대주의"},
+{id:"c20b",u:"c",no:"20-(2)",t:"e",q:"이와 같은 문화 이해의 태도가 필요한 까닭을 현대 사회의 특징을 바탕으로 서술하시오.",p:P_TIBET,
+ m:"현대 사회는 세계화된 사회이며 우리나라 역시 다문화 사회가 되고 있다. 서로의 문화를 제대로 이해하지 못할 경우 갈등이 발생할 수 있으므로 각 문화가 가진 나름의 의미와 가치를 인정하고 이해하려는 태도가 필요하다."},
+{id:"c20c",u:"c",no:"20-(3)",t:"e",q:"이와 같은 문화 이해의 태도를 가질 때 주의해야 할 점을 한 가지 서술하시오.",p:P_TIBET,
+ m:"인권, 생명 존중과 같은 보편적 가치나 인간의 존엄성을 해치는 문화까지 문화 상대주의를 적용하여 이해하지 않도록 주의해야 한다."},
+
+/* ── Ⅸ 민주주의와 시민 ── */
+{id:"d01",u:"d",no:"01",q:"밑줄 친 ㉠, ㉡에 대한 설명으로 옳은 것은?",
+ p:"<p><u>㉠정치</u>란 일상생활에서 발생하는 구성원 간 대립과 갈등을 조정하여 해결해 나가는 모든 활동을 의미한다. 한편, 정치권력의 획득, 유지, 행사 등 국가와 관련한 활동만을 일컬어 <u>㉡정치</u>라고 할 때도 있다.</p>",
+ o:["㉠은 좁은 의미의 정치이다.","㉡의 사례로 학급 회의를 들 수 있다.","㉡은 ㉠에 비해 정치를 넓은 의미로 규정한다.","주민 회의는 ㉠에는 해당하지만 ㉡에는 해당하지 않는다.","대통령의 권력 행사는 ㉠에는 해당하지 않지만 ㉡에는 해당한다."],a:3,
+ e:"㉠은 넓은 의미, ㉡은 좁은 의미의 정치입니다. 주민 회의나 학급 회의는 넓은 의미에만 해당하고, 대통령의 권력 행사는 좁은 의미와 넓은 의미 모두에 해당합니다."},
+{id:"d02",u:"d",no:"02",q:"다음 중 공동체 생활에 필요한 정치의 역할로 볼 수 <u>없는</u> 것은?",
+ o:["사회를 안정시킨다.","사회 질서를 유지한다.","공동체의 문제를 해결한다.","구성원 간 대립과 갈등을 확대시킨다.","구성원들의 생각을 모아 공동체의 발전 방향을 제시한다."],a:3,
+ e:"정치는 대립과 갈등을 조정하고 해결하는 활동입니다. 갈등을 확대하는 것은 정치의 역할이 아닙니다."},
+{id:"d03",u:"d",no:"03",q:"다음 빈칸에 들어갈 내용으로 보기 <u>어려운</u> 것은?",
+ p:"<p>오늘날의 민주주의는 일상생활에서 발생하는 여러 가지 문제를 민주적으로 해결하는 것까지를 의미한다. 그렇다면 공동체의 문제 해결이 민주적이어야 하는 까닭은 무엇일까? 민주적 의사 결정 과정을 거치지 않으면 ______________</p>",
+ o:["문제가 해결되기 어렵기 때문이다.","권력 행사에 대해 반발이 뒤따를 것이기 때문이다.","의사 결정이 신속하게 이루어지기 어렵기 때문이다.","구성원들이 결정에 동의하고 따르기 어렵기 때문이다.","권력 행사에 동의하지 않는 사람이 많아져 갈등이 발생하기 때문이다."],a:2,
+ e:"민주적 의사 결정은 여러 의견을 듣느라 오히려 시간이 더 걸립니다. 신속성은 민주적 절차를 거쳐야 하는 이유가 될 수 없습니다."},
+{id:"d04",u:"d",no:"04",q:"(가), (나)가 설명하는 민주적 생활양식을 바르게 연결한 것은?",
+ p:"<p>(가) 상대방이 나와 다를 수 있음을 인정한다.</p><p>(나) 합의가 이루어지지 않을 때 사용하는 방법이며, 소수 의견 존중이 함께 이루어져야 한다.</p>",head:["(가)","(나)"],
+ o:[["관용","대화와 타협"],["관용","다수결"],["대화와 타협","다수결"],["대화와 타협","관용"],["다수결","관용"]],a:1,
+ e:"(가) 나와 다름을 인정하는 태도는 관용, (나) 합의가 안 될 때 쓰며 소수 의견 존중이 필요한 방법은 다수결입니다."},
+{id:"d05",u:"d",no:"05",q:"고대 아테네 민주주의의 특징을 <보기>에서 고른 것은?",
+ b:["시민의 대표에 의해 정치가 이루어졌다.","모든 사회 구성원이 시민으로서의 자격을 가지고 있었다.","다스리는 자와 다스림을 받는 자가 일치하는 정치 형태였다.","시민들이 직접 참여하는 민회에서 국가의 중요한 정책이 결정되었다."],
+ o:KL,a:4,
+ e:"아테네는 시민이 민회에 직접 참여하는 직접 민주 정치였습니다(ㄷ, ㄹ). 다만 여성, 노예, 외국인은 시민에서 제외되었고(ㄴ ✕), 대표를 뽑는 방식이 아니었습니다(ㄱ ✕)."},
+{id:"d06",u:"d",no:"06",q:"근대 시민 혁명의 결과와 한계에 대한 옳은 설명을 <보기>에서 고른 것은?",
+ b:["보통 선거가 실시되었다.","왕 대신 귀족이 지배하게 되었다.","시민이 뽑은 대표가 정치를 담당하였다.","재산이 있는 성인 남성에게만 참정권이 주어졌다."],
+ o:KL,a:4,
+ e:"시민 혁명으로 시민이 뽑은 대표가 정치하는 대의 민주 정치가 자리 잡았지만(ㄷ), 재산이 있는 성인 남성만 참정권을 가졌다는 한계가 있었습니다(ㄹ). 보통 선거는 그 이후에 확립되었습니다."},
+{id:"d07",u:"d",no:"07",q:"다음 근대 시민 운동이 공통으로 추구하였던 것은?",
+ p:"<p>• 영국 노동자들의 차티스트 운동</p><p>• 여성 참정권 운동</p>",
+ o:["성평등","선거권 확대","인종 차별 금지","실질적 평등","직접 민주주의 실시"],a:1,
+ e:"차티스트 운동은 노동자의, 여성 참정권 운동은 여성의 선거권을 요구했습니다. 공통점은 선거권 확대입니다."},
+{id:"d08",u:"d",no:"08",q:"다음 중 고대 아테네의 민주주의와 구별되는 근대 민주주의만의 특징은?",
+ o:["시민 혁명을 거치면서 등장하였다.","시민이 직접 국가의 중요한 정책을 결정하였다.","전체 사회 구성원 중 일부만 정치에 참여할 수 있었다.","추첨을 통하여 누구나 행정 업무를 담당할 기회를 얻었다.","일정 연령이 된 사회 구성원 모두에게 선거권이 주어졌다."],a:0,
+ e:"근대 민주주의는 시민 혁명을 통해 등장했습니다. ②④는 아테네의 특징, ③은 아테네와 근대의 공통점, ⑤는 보통 선거가 확립된 현대 민주주의의 특징입니다."},
+{id:"d09",u:"d",no:"09",q:"다음은 그림을 보고 학생들이 나눈 대화이다. 적절한 내용을 말한 학생을 <보기>에서 고른 것은?",
+ p:"<p>[그림] '자유'와 '평등'이라고 적힌 두 사람이 '인간의 존엄성'을 함께 떠받치고 있다.</p>",
+ b:["자유를 추구하면 평등은 저절로 실현될 수 있어.","인간의 존엄성이 실현되려면 자유와 평등이 조화를 이루어야 해.","인간의 존엄성, 자유, 평등은 모두 민주주의가 추구하는 이념이야.","자유와 평등 한 가지만 보장하더라도 인간의 존엄성을 실현할 수 있어."],bk:["갑:","을:","병:","정:"],
+ o:["갑, 을","갑, 병","을, 병","을, 정","병, 정"],a:2,
+ e:"인간의 존엄성은 자유와 평등이 함께, 조화롭게 보장될 때 실현됩니다. 자유만 추구한다고 평등이 저절로 이루어지지 않고(갑 ✕), 하나만으로는 부족합니다(정 ✕)."},
+{id:"d10",u:"d",no:"10",q:"평등에 대한 설명으로 옳은 것만을 <보기>에서 있는 대로 고른 것은?",
+ b:["평등이란 모든 사람이 동등하게 대우받는 것이다.","장애인 의무 고용 제도는 실질적 평등을 실현하기 위한 정책이다.","약자를 적극적으로 배려하는 것은 형식적 평등을 추구하는 것이다.","현대 민주 국가는 모두에게 동등한 기회를 부여하려고 노력한다."],
+ o:["ㄱ, ㄴ","ㄱ, ㄷ","ㄷ, ㄹ","ㄱ, ㄴ, ㄹ","ㄴ, ㄷ, ㄹ"],a:3,
+ e:"약자를 적극적으로 배려하는 것은 형식적 평등이 아니라 실질적 평등을 추구하는 것입니다(ㄷ ✕). 나머지는 모두 옳습니다."},
+{id:"d11",u:"d",no:"11",q:"국민 주권의 원리를 가장 잘 설명한 것은?",
+ o:["국가 권력이 남용되어서는 안 된다는 원리이다.","국민이 스스로 나라를 다스려야 한다는 원리이다.","국가의 의사를 결정하는 최고 권력이 국민에게 있다는 원리이다.","국가 권력 기관 간에 견제와 균형이 이루어져야 한다는 원리이다.","헌법에 따라 국가기관을 구성하고 권력을 행사해야 한다는 원리이다."],a:2,
+ e:"국민 주권은 주권(국가 의사를 결정하는 최고 권력)이 국민에게 있다는 원리입니다. ②는 국민 자치, ①④는 권력 분립, ⑤는 입헌주의입니다."},
+{id:"d12",u:"d",no:"12",q:"다음이 공통으로 설명하고 있는 민주주의의 기본 원리는?",
+ p:"<p>• 국가 권력을 서로 독립된 기관이 나누어 맡도록 하여 견제와 균형을 이루도록 하는 것이다.</p><p>• 국가 권력이 특정인이나 특정 집단에 집중되어 남용되는 것을 막고자 하는 것이다.</p>",
+ o:["대의제","입헌주의","국민 자치","국민 주권","권력 분립"],a:4,
+ e:"권력을 나누어 맡겨 견제와 균형을 이루고 권력 남용을 막는 원리는 권력 분립입니다."},
+{id:"d13",u:"d",no:"13",q:"다음 글에서 시민이 거리로 나온 까닭을 <u>잘못</u> 설명한 것은?",
+ p:"<p>1960년 봄, 3.15 부정 선거 항의 시위에 나갔던 고등학생 김주열은 최루탄이 눈에 박힌 채 바다에서 시신으로 떠올랐다. 분노한 국민은 '독재 정권 물러나라.', '정·부통령 선거 다시 하라.' 등의 구호를 외치며 거리로 나왔다. 4·19 혁명이었다.</p>",
+ o:["정권이 주권자인 국민의 뜻을 따르지 않았기 때문이다.","시민에 의한 직접 민주주의가 행해지지 않았기 때문이다.","국가 권력에 의해 인간의 존엄성이 훼손되었기 때문이다.","부정 선거로 국민 자치 원리가 지켜지지 않았기 때문이다.","국가 권력이 국민이 동의하지 않는 방향으로 행사되었기 때문이다."],a:1,
+ e:"4·19 혁명은 부정 선거와 독재에 대한 저항입니다. 시민들은 공정한 선거(대의제의 정상화)를 요구한 것이지 직접 민주주의를 요구한 것이 아닙니다."},
+{id:"d14",u:"d",no:"14",q:"직접 민주주의에 비해 대의제가 가지는 한계점에 대한 옳은 설명을 <보기>에서 고른 것은?",
+ b:["사회 규모가 커질수록 시행이 어렵다.","시민들의 정치적 무관심이 커질 수 있다.","시민의 정치 참여 방법이 지나치게 많다.","대표가 국민의 뜻을 정확히 반영하지 못할 수 있다."],
+ o:KL,a:3,
+ e:"대의제에서는 대표에게 정치를 맡기다 보니 정치적 무관심이 커지거나(ㄴ) 대표가 국민의 뜻을 제대로 반영하지 못할 수 있습니다(ㄹ). ㄱ은 직접 민주주의의 한계입니다."},
+{id:"d15",u:"d",no:"15",q:"다음 중 시민의 참여를 활성화하기 위한 제도로 보기 <u>어려운</u> 것은?",
+ o:["언론의 자유를 보장한다.","집회와 결사의 자유를 보장한다.","헌법에 따라 국가기관을 구성한다.","정책을 결정하기에 앞서 공청회를 개최한다.","국가의 주요 정책을 결정할 때 국민 투표를 실시한다."],a:2,
+ e:"헌법에 따라 국가기관을 구성하는 것은 입헌주의 원리로, 시민 참여를 활성화하는 제도와는 거리가 멉니다."},
+{id:"d16",u:"d",no:"16",q:"다음 제도들의 공통점을 <보기>에서 고른 것은?",
+ p:"<p>• 국민 투표제 &nbsp;&nbsp; • 국민 소환제</p>",
+ b:["직접 민주주의의 요소를 가지고 있다.","우리나라 헌법을 개정할 때 실시한다.","대의제의 문제점을 보완하는 기능이 있다.","선출된 정치인의 임기가 끝나기 전에 해임하는 제도이다."],
+ o:KL,a:1,
+ e:"두 제도 모두 직접 민주주의 요소로 대의제를 보완합니다(ㄱ, ㄷ). ㄴ은 국민 투표제에만, ㄹ은 국민 소환제에만 해당합니다."},
+{id:"d17",u:"d",no:"17",q:"다음 ㉠에 대한 설명으로 옳은 것은?",
+ p:"<p>공공의 문제에 대한 시민 참여는 ( ㉠ )에서 출발한다. ( ㉠ )(이)란 시민이 합리적 토론을 통해 공공의 문제에 관한 사회적 합의를 만들어 가는 자리이다.</p>",
+ o:["㉠에 적절한 내용은 '선거'이다.","국가기관이 제도적으로 보장할 필요가 없다.","시민의 정치 무관심 문제를 일으킨다는 문제가 있다.","시민의 뜻을 정책 결정 과정에 전달하는 데 방해가 된다.","㉠에 참여할 때 시민은 사익과 공익을 조화시키려고 노력해야 한다."],a:4,
+ e:"㉠은 공론장입니다. 공론장은 시민의 뜻을 정책에 전달하는 통로이며, 참여하는 시민은 사익과 공익을 조화시키려 노력해야 합니다."},
+{id:"d18a",u:"d",no:"18-(1)",t:"e",q:"㉠에 해당하는 용어를 쓰시오.",p:P_POL,m:"정치"},
+{id:"d18b",u:"d",no:"18-(2)",t:"e",q:"㉠(정치)의 역할을 두 가지 서술하시오.",p:P_POL,
+ m:"정치는 공동체의 문제를 해결하고, 사회 질서를 유지하는 역할을 한다."},
+
+/* ── Ⅺ 일상생활과 법 ── */
+{id:"l12",u:"l",no:"12",q:"다음에서 설명하는 A로 옳은 것은?",
+ p:"<p>법원이 구체적 분쟁에 법을 적용하여 옳고 그름을 판단하는 과정을 ( A )(이)라고 한다. 이를 통해 사람들 사이의 분쟁을 해결하고, 범죄자에게 형벌을 부과함으로써 사회 질서를 유지한다.</p>",
+ o:["입법","재판","행정","수사","고소"],a:1,
+ e:"법원이 분쟁에 법을 적용해 옳고 그름을 판단하는 과정은 재판입니다."},
+{id:"l13",u:"l",no:"13",q:"다음을 통해 알 수 있는 재판의 기능으로 가장 적절한 것은?",
+ p:"<p>앵무새 사육장을 운영하던 갑은 신축 건물 공사 소음으로 인해 앵무새가 이상 증상을 보이다 폐사하여 막대한 손해를 입었다. 이에 재판을 제기하여 건설 회사를 상대로 손해 배상을 받을 수 있었다.</p>",
+ o:["분쟁 해결","공공복리 실현","범죄자의 처벌","사회 질서 유지","권리 보호 및 구제"],a:4,
+ e:"갑은 침해당한 자신의 권리(재산상 손해)를 재판을 통해 배상받았습니다. 재판의 권리 보호 및 구제 기능을 보여 줍니다."},
+{id:"l14",u:"l",no:"14",q:"그림을 통해 파악할 수 있는 재판에 대한 옳은 설명만을 <보기>에서 고른 것은?",
+ p:'<div class="flow"><b>피해자의 고소</b>→<b>검사의 수사 및 기소</b>→<b>공판</b>→<b>판사의 판결</b></div>',
+ b:["민사 재판이다.","검사의 기소로 시작된다.","개인 간의 재산 분쟁 사건을 다룬다.","범죄 행위의 유무죄와 형량을 결정한다."],
+ o:KL,a:3,
+ e:"검사의 수사와 기소가 있으므로 형사 재판입니다. 형사 재판은 검사의 기소로 시작되고(ㄴ) 유무죄와 형량을 결정합니다(ㄹ). ㄱ, ㄷ은 민사 재판에 대한 설명입니다."},
+{id:"l15",u:"l",no:"15",q:"다음의 밑줄 친 ㉠에 따라 이루어질 재판에 관한 설명으로 옳은 것은?",
+ p:"<p>갑은 1년 뒤에 갚을 것을 약속받고 을에게 1억 원을 빌려주었으나, 을은 갚기로 약속한 날짜가 지나도 갚지 않았다. 갑은 여러 차례 돌려달라고 요구했으나, 을은 돈이 있음에도 불구하고 갚지 않았다. 이에 갑은 돈을 갚을 것을 요구하는 <u>㉠소송을 법원에 제기</u>하였다.</p>",
+ o:["원고는 을, 피고는 갑이다.","갑과 달리 을은 변호사의 도움을 받을 수 있다.","을이 재판에서 지게 되면 형사 처벌을 받을 수 있다.","갑이 승소하면 을을 대신하여 법원이 돈을 돌려준다.","갑은 을에게 돈을 빌려준 사실과 액수를 증명해야 한다."],a:4,
+ e:"민사 재판입니다. 소송을 낸 갑이 원고, 을이 피고이며 양쪽 모두 변호사의 도움을 받을 수 있습니다. 민사 재판은 형사 처벌과 무관하고, 원고인 갑이 자신의 주장을 증명해야 합니다."},
+{id:"l16",u:"l",no:"16",q:"다음은 우리나라의 헌법 조항이다. 이를 통해 추구하는 궁극적인 목적으로 옳은 것은?",
+ p:"<p>제101조 ① 사법권은 법관으로 구성된 법원에 속한다.</p><p>제103조 법관은 헌법과 법률에 의하여 그 양심에 따라 독립하여 심판한다.</p>",
+ o:["공정한 재판","인권 침해 방지","법원의 위상 강화","신속한 분쟁 해결","분쟁 해결 비용 감축"],a:0,
+ e:"두 조항은 사법권의 독립(법원의 독립, 법관의 독립)을 규정합니다. 사법권 독립의 궁극적 목적은 공정한 재판입니다."},
+{id:"l17",u:"l",no:"17",q:"그림에 나타난 사법 제도에 대한 설명으로 옳은 것은?",
+ p:'<div class="flow"><b>1심 법원</b>─ ㉠ →<b>2심 법원</b>─ ㉡ →<b>3심 법원</b></div>',
+ o:["㉠은 항소, ㉡은 상소이다.","3심 법원은 고등 법원이다.","재판을 제기당한 소송 당사자는 이용할 수 없다.","법관이 잘못된 판결을 할 수 있음을 전제로 한다.","신속하고 효율적인 재판을 달성하기 위한 제도이다."],a:3,
+ e:"심급 제도입니다. 법관도 잘못 판결할 수 있다는 전제에서 여러 번 재판받을 기회를 주어 공정한 재판을 추구합니다. ㉠은 항소, ㉡은 상고이며(상소는 둘을 합친 말), 3심 법원은 대법원입니다."},
+
+/* ── Ⅻ 인권과 기본권 ── */
+{id:"h01",u:"h",no:"01",q:"인권에 관한 설명으로 옳은 것은?",
+ o:["사람마다 누릴 수 있는 권리가 다르다.","일정한 나이가 되어야 누릴 수 있는 권리이다.","고대 아테네에서부터 모든 인간이 보장받아 왔다.","시민 혁명, 참정권 운동과 같은 시민의 투쟁과 노력으로 그 내용이 확대되어 왔다.","오늘날 다양한 법과 제도로 보장되고 있으므로 국가기관에 의한 침해는 발생하지 않는다."],a:3,
+ e:"인권은 태어날 때부터 누구나 동등하게 누리는 권리이며, 시민의 오랜 투쟁과 노력으로 확대되어 왔습니다. 오늘날에도 국가기관에 의한 침해는 일어날 수 있습니다."},
+{id:"h02",u:"h",no:"02",q:"다음 글에 대한 설명으로 옳은 것은?",
+ p:"<p>가영이는 주말에 친구 나현이, 다람이와 쇼핑을 하러 갔다. 나현이가 여러 가지 물건 중에 무엇을 살지를 결정하지 못하고 오래 고민하자, 다람이는 나현이를 '<u>㉠결정 장애</u>'라고 놀렸다. 쇼핑을 마치고 집에 돌아온 가영이는 다람이가 사용한 '결정 장애'라는 표현에 관해 깊은 고민에 빠졌다. '결정 장애'라는 표현은 '장애'라는 말을 '잘하지 못하는 것'이라는 부정적인 의미로 여기게 하므로 <u>㉡장애인을 차별하는 용어</u>라는 생각이 들었기 때문이다. 가영이는 '결정 장애' 외에도 자신이 <u>㉢일상생활에서 사용하고 있는 단어 중에 누군가를 차별하고 배제하는 단어는 없는지, 누군가를 비하하고 갈등을 만드는 것은 아닌지 곰곰이 반성해 보았다.</u></p>",
+ o:["가영이는 나현이의 인권을 침해하였다.","다람이는 인권 감수성이 풍부하다고 할 수 있다.","가영이는 ㉠이 인권 침해에 해당하지 않는다고 보았다.","㉡에 해당하는 용어에는 '아빠 다리'와 '유모차'가 있다.","㉢과 같이 일상의 사소한 부분에서 인권을 고려하는 태도를 인권 감수성이라고 한다."],a:4,
+ e:"일상의 사소한 일에서도 인권 문제를 민감하게 알아차리는 태도가 인권 감수성입니다. 놀린 사람은 다람이이고, 가영이는 그 표현이 차별이라고 보았습니다."},
+{id:"h03",u:"h",no:"03",q:"인권 침해 행위로 가장 거리가 먼 것은?",
+ o:["외모로 차별하는 행위","무차별적인 폭행 행위","인간의 존엄성을 훼손하는 행위","결식아동에게만 식사를 무료로 제공하는 행위","다른 사람의 개인 정보를 함부로 유출하는 행위"],a:3,
+ e:"결식아동에게 무료 급식을 제공하는 것은 사회적 약자의 인간다운 생활을 보장하는 일로, 인권 침해가 아니라 인권 보장입니다."},
+{id:"h04",u:"h",no:"04",q:"기본권에 대한 설명으로 옳지 <u>않은</u> 것은?",
+ o:["우리나라는 민법에 기본권을 규정하여 보장하고 있다.","오늘날 대부분의 국가에서 법을 통해 기본권을 보장한다.","우리나라는 국가가 국민의 기본권을 지키고, 이를 보장할 의무가 있음을 법으로 명시하고 있다.","우리나라는 인간으로서의 존엄과 가치 및 행복 추구권을 토대로 다양한 종류의 기본권을 보장하고 있다.","기본권 중 행복추구권이란 물질적 풍요뿐만 아니라 정신적 만족을 추구할 수 있는 포괄적 권리를 의미한다."],a:0,
+ e:"기본권은 민법이 아니라 헌법에 규정되어 있습니다. 헌법이 보장하는 기본적 인권이 기본권입니다."},
+{id:"h05",u:"h",no:"05",q:"(가)와 (나)에 해당하는 기본권의 종류를 바르게 연결한 것은?",
+ p:"<p>(가) 국가의 의사 결정에 참여할 수 있는 권리</p><p>(나) 모든 국민이 차별받지 않고 동등하게 대우받을 권리</p>",head:["(가)","(나)"],
+ o:[["참정권","평등권"],["참정권","청구권"],["사회권","평등권"],["사회권","청구권"],["청구권","평등권"]],a:0,
+ e:"(가) 국가 의사 결정에 참여할 권리는 참정권, (나) 차별받지 않고 동등하게 대우받을 권리는 평등권입니다."},
+{id:"h06",u:"h",no:"06",q:"다음 중 권리의 종류가 나머지와 <u>다른</u> 하나는?",
+ o:["청원권","근로의 권리","교육을 받을 권리","쾌적한 환경에서 살 권리","인간다운 생활을 할 권리"],a:0,
+ e:"청원권은 청구권에 속합니다. 나머지 ②~⑤는 모두 인간다운 생활의 보장을 국가에 요구하는 사회권입니다."},
+{id:"h07",u:"h",no:"07",q:"다음 사례에서 침해된 기본권과 관련한 헌법 조항은?",
+ p:"<p>교도소에 수감 중인 갑은 법정에 나가는 데 드는 비용을 내지 않았다는 이유로 자신이 청구한 재판에 출석하지 못하였다.</p>",
+ o:["제34조 ① 모든 국민은 인간다운 생활을 할 권리를 가진다.","제17조 모든 국민은 사생활의 비밀과 자유를 침해받지 아니한다.","제24조 모든 국민은 법률이 정하는 바에 의하여 선거권을 가진다.","제38조 모든 국민은 법률이 정하는 바에 의하여 납세의 의무를 진다.","제27조 ① 모든 국민은 헌법과 법률이 정한 법관에 의하여 법률에 의한 재판을 받을 권리를 가진다."],a:4,
+ e:"갑은 재판에 출석하지 못했으므로 재판을 받을 권리(재판 청구권, 헌법 제27조)를 침해당했습니다."},
+{id:"h08",u:"h",no:"08",q:"'국가 권력의 간섭을 받지 않고 자유롭게 생활할 수 있는 권리'와 관련 있는 헌법 조항만을 <보기>에서 있는 대로 고른 것은?",
+ b:["제11조 ① 모든 국민은 법 앞에 평등하다.","제23조 ① 모든 국민의 재산권은 보장된다.","제25조 모든 국민은 법률이 정하는 바에 의하여 공무 담임권을 가진다.","제21조 ① 모든 국민은 언론·출판의 자유와 집회·결사의 자유를 가진다."],
+ o:["ㄱ, ㄴ","ㄱ, ㄷ","ㄴ, ㄹ","ㄱ, ㄴ, ㄷ","ㄴ, ㄷ, ㄹ"],a:2,
+ e:"제시된 권리는 자유권입니다. 재산권(ㄴ)과 언론·출판·집회·결사의 자유(ㄹ)가 자유권이고, ㄱ은 평등권, ㄷ(공무 담임권)은 참정권입니다."}
+];
+const QM={};Q.forEach(q=>QM[q.id]=q);
+const UM={};UNITS.forEach(u=>UM[u.k]=u);
+
+/* 저장 */
+const KEY="sahoe-quiz-v1";
+let S={wrong:{},best:{},fav:{},resume:null,opt:{shuffle:false,essay:true}};
+try{
+  const r=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(r&&typeof r==="object"){S.wrong=r.wrong||{};S.best=r.best||{};S.fav=r.fav||{};S.resume=r.resume||null;S.opt=Object.assign(S.opt,r.opt||{});}
+}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+let V="home";       // home | quiz | result | notes
+let ses=null;       // {title,key,mode,ids,i,ans:{id:{pick,ok}},shown:{},draft:{}}
+let clearArmed=false;
+const app=document.getElementById("app");
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function wrongIds(k){return Q.filter(q=>S.wrong[q.id]&&(!k||q.u===k)).map(q=>q.id);}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function optText(q,i){const o=q.o[i];return Array.isArray(o)?q.head[0]+" "+o[0]+" / "+q.head[1]+" "+o[1]:o;}
+
+function start(title,key,mode,ids){
+  if(mode==="unit"||mode==="all"){
+    if(!S.opt.essay)ids=ids.filter(id=>QM[id].t!=="e");
+    if(S.opt.shuffle)ids=shuffle(ids);
+  }
+  if(!ids.length)return;
+  ses={title,key,mode,ids,i:0,ans:{},shown:{},draft:{},keep:mode!=="wrong"&&ids.length>1};
+  saveSes();V="quiz";render(true);
+}
+function saveSes(){
+  if(ses&&ses.keep)S.resume={title:ses.title,key:ses.key,mode:ses.mode,ids:ses.ids,i:ses.i,ans:ses.ans,shown:ses.shown};
+  save();
+}
+function resumeInfo(){
+  const r=S.resume;
+  if(!r||!Array.isArray(r.ids)||!r.ids.length||!r.ids.every(id=>QM[id]))return null;
+  return {r,done:r.ids.filter(id=>r.ans&&r.ans[id]).length,n:r.ids.length};
+}
+function favIds(){return Q.filter(q=>S.fav[q.id]).map(q=>q.id);}
+function favBtn(id){const on=!!S.fav[id];return '<button type="button" class="star'+(on?" on":"")+'" data-act="fav" data-id="'+id+'" aria-pressed="'+on+'">'+(on?"★ 찜함":"☆ 찜하기")+"</button>";}
+
+/* 문제 본문 */
+function body(q){
+  let h="";
+  if(q.p)h+='<div class="passage">'+q.p+"</div>";
+  if(q.b){
+    h+='<div class="bogi">'+q.b.map((t,i)=>"<p>"+(q.bk?q.bk[i]:KN[i]+".")+" "+t+"</p>").join("")+"</div>";
+  }
+  return h;
+}
+function tag(q){const u=UM[q.u];return '<span class="pill">'+u.roman+" "+u.name+'</span><span class="pill">'+q.no+"번"+(q.t==="e"?" · 서술형":"")+"</span>";}
+
+/* 화면 */
+function home(){
+  const total=Q.length,wn=wrongIds().length;
+  let h='<header class="stack"><span class="eyebrow">사회 단원평가 · 4개 단원 '+total+'문제</span><h1><span class="hl">중학교 1학년 2학기</span><br>사회 퀴즈</h1><p class="sub">틀린 문제는 오답노트에 자동으로 모이고, 다시 볼 문제는 찜해 둘 수 있습니다.</p></header>';
+  const ri=resumeInfo();
+  if(ri)h+='<section class="resume"><span class="eyebrow">풀던 문제가 있습니다</span><b>'+esc(ri.r.title)+" · "+ri.done+" / "+ri.n+' 문제 풀었음</b><div class="bar"><i style="width:'+(ri.done/ri.n*100)+'%"></i></div><div class="row"><button type="button" class="btn primary" data-act="resume">이어풀기</button><button type="button" class="btn" data-act="drop">기록 지우기</button></div></section>';
+  if(wn)h+='<button type="button" class="btn red" data-act="wrong">오답 '+wn+'문제 다시 풀기</button>';
+  h+='<section class="stack" aria-label="단원">';
+  UNITS.forEach(u=>{
+    const qs=Q.filter(q=>q.u===u.k),mc=qs.filter(q=>q.t!=="e").length,es=qs.length-mc;
+    const b=S.best[u.k],w=wrongIds(u.k).length;
+    h+='<button type="button" class="unit" data-act="unit" data-k="'+u.k+'"><span class="roman">'+u.roman+'</span><span class="body"><span class="name">'+u.name+'</span><span class="meta">객관식 '+mc+(es?" · 서술형 "+es:"")+(b?" · 최근 "+b.s+"/"+b.t:"")+'</span></span>'+(w?'<span class="pill bad">오답 '+w+'</span>':"")+'<span class="go" aria-hidden="true">›</span></button>';
+  });
+  h+='</section><button type="button" class="btn primary" data-act="all">전체 '+total+'문제 풀기</button>';
+  h+='<div class="opts"><label for="opt-shuffle">문제 순서 섞기<input type="checkbox" id="opt-shuffle" data-opt="shuffle"'+(S.opt.shuffle?" checked":"")+'></label><label for="opt-essay">서술형 문제 포함<input type="checkbox" id="opt-essay" data-opt="essay"'+(S.opt.essay?" checked":"")+"></label></div>";
+  h+='<p class="sub">정답은 문제지의 정답표를 따랐고, 해설은 따로 붙인 것입니다. 사진에서 잘린 문제는 빠져 있습니다.</p>';
+  return h;
+}
+
+function quiz(){
+  const id=ses.ids[ses.i],q=QM[id],a=ses.ans[id],n=ses.ids.length;
+  let h='<div class="topbar"><button type="button" class="x" data-act="quit" aria-label="그만 풀기">✕</button><div class="bar"><i style="width:'+((ses.i+(a?1:0))/n*100)+'%"></i></div><span class="count">'+(ses.i+1)+" / "+n+"</span></div>";
+  h+='<div class="tags">'+tag(q)+(S.wrong[id]?'<span class="pill bad">전에 틀림</span>':"")+favBtn(id)+"</div>";
+  h+='<p class="stem">'+q.q.replace(/<보기>/g,"&lt;보기&gt;")+"</p>"+body(q);
+  if(q.t==="e"){
+    h+='<textarea id="draft" placeholder="답을 직접 써 보세요 (저장되지 않습니다)" aria-label="내 답">'+esc(ses.draft[id]||"")+"</textarea>";
+    if(!ses.shown[id])h+='<button type="button" class="btn primary" data-act="show">모범 답안 보기</button>';
+    else{
+      h+='<div class="model" id="fb"><b>모범 답안</b>'+q.m+"</div>";
+      if(!a)h+='<p class="sub">내 답과 비교해서 스스로 채점하세요.</p><div class="row"><button type="button" class="btn" data-act="self" data-ok="1">맞았어요</button><button type="button" class="btn red" data-act="self" data-ok="0">틀렸어요</button></div>';
+      else h+='<div class="fb'+(a.ok?"":" bad")+'"><strong>'+(a.ok?"맞았어요":"오답노트에 담았어요")+"</strong></div>";
+    }
+  }else{
+    if(q.head)h+='<div class="pairhead"><span>'+q.head[0]+"</span><span>"+q.head[1]+"</span></div>";
+    h+='<div class="stack">';
+    q.o.forEach((o,i)=>{
+      let c="",m="";
+      if(a){if(i===q.a){c=" right";m="정답";}else if(i===a.pick){c=" wrong";m="내 답";}}
+      const t=Array.isArray(o)?'<span class="pair"><span>'+o[0]+"</span><span>"+o[1]+"</span></span>":o;
+      h+='<button type="button" class="choice'+c+'" data-act="pick" data-i="'+i+'"'+(a?" disabled":"")+'><span class="n">'+N[i]+'</span><span class="t">'+t+"</span>"+(m?'<span class="m">'+m+"</span>":"")+"</button>";
+    });
+    h+="</div>";
+    if(a)h+='<div class="fb'+(a.ok?"":" bad")+'" id="fb"><strong>'+(a.ok?"정답입니다":"오답입니다 · 정답 "+N[q.a])+"</strong><p>"+q.e+"</p>"+(ses.mode==="wrong"&&a.ok?"<p>오답노트에서 지웠습니다.</p>":"")+"</div>";
+  }
+  if(a)h+='<div class="dock"><div><button type="button" class="btn redo" data-act="redo">↺ 다시 풀기</button><button type="button" class="btn primary" data-act="next">'+(ses.i+1<n?"다음 문제":"결과 보기")+"</button></div></div>";
+  return h;
+}
+
+function result(){
+  const n=ses.ids.length,ok=ses.ids.filter(id=>ses.ans[id]&&ses.ans[id].ok).length,bad=ses.ids.filter(id=>ses.ans[id]&&!ses.ans[id].ok);
+  let h='<header class="stack"><span class="eyebrow">'+esc(ses.title)+'</span><h1>채점 결과</h1></header>';
+  h+='<div class="score"><div class="big">'+ok+"<small> / "+n+'</small></div><p class="sub">'+(bad.length?"틀린 "+bad.length+"문제는 오답노트에 담겼습니다.":"모두 맞혔습니다.")+"</p></div>";
+  if(bad.length)h+='<button type="button" class="btn primary" data-act="retry">틀린 '+bad.length+"문제 바로 다시 풀기</button>";
+  h+='<button type="button" class="btn" data-act="again">같은 '+n+"문제 처음부터 다시 풀기</button>";
+  h+='<div class="row"><button type="button" class="btn" data-act="notes">오답노트 보기</button><button type="button" class="btn" data-act="home">단원 선택으로</button></div>';
+  h+='<ul class="rl">'+ses.ids.map(id=>{const q=QM[id],a=ses.ans[id];return '<li><span class="o'+(a.ok?"":" x")+'">'+(a.ok?"○":"✕")+"</span><span>"+UM[q.u].roman+" "+q.no+"번 · "+q.q.replace(/<\/?u>/g,"").replace(/<보기>/g,"&lt;보기&gt;")+"</span></li>";}).join("")+"</ul>";
+  return h;
+}
+
+function notes(){
+  const ids=wrongIds();
+  let h='<header class="stack"><span class="eyebrow">틀린 문제 모음</span><h1>오답노트</h1><p class="sub">'+(ids.length?"모두 "+ids.length+"문제. 다시 풀어서 맞히면 노트에서 지워집니다.":"")+"</p></header>";
+  if(!ids.length)return h+'<div class="empty"><p>아직 틀린 문제가 없습니다.<br>문제를 풀면 틀린 문제가 여기에 모입니다.</p></div><button type="button" class="btn primary" data-act="home">문제 풀러 가기</button>';
+  h+='<button type="button" class="btn primary" data-act="wrong">오답 '+ids.length+"문제 다시 풀기</button>";
+  UNITS.forEach(u=>{
+    const us=ids.filter(id=>QM[id].u===u.k);if(!us.length)return;
+    h+='<h2 class="unit-h">'+u.roman+" "+u.name+" · "+us.length+"문제</h2>";
+    us.forEach(id=>{
+      const q=QM[id],w=S.wrong[id];
+      h+='<article class="note"><div class="tags"><span class="pill">'+q.no+"번"+(q.t==="e"?" · 서술형":"")+'</span><span class="pill bad">'+w.n+'번 틀림</span>'+favBtn(id)+'</div><p class="stem">'+q.q.replace(/<보기>/g,"&lt;보기&gt;")+"</p>";
+      if(q.p||q.b)h+="<details><summary>지문·보기 펼치기</summary>"+body(q)+"</details>";
+      h+='<div class="ans">';
+      if(q.t==="e")h+='<div class="real"><span class="k">모범 답안</span><span class="v">'+q.m+"</span></div>";
+      else{
+        if(w.pick!=null)h+='<div class="mine"><span class="k">내가 고른 답</span><span class="v">'+N[w.pick]+" "+optText(q,w.pick)+"</span></div>";
+        h+='<div class="real"><span class="k">정답</span><span class="v">'+N[q.a]+" "+optText(q,q.a)+"</span></div>";
+      }
+      h+="</div>";
+      if(q.e)h+='<p class="exp">'+q.e+"</p>";
+      h+='<div class="foot"><button type="button" class="btn small" data-act="one" data-id="'+id+'">이 문제 다시 풀기</button><button type="button" class="btn small" data-act="del" data-id="'+id+'">노트에서 지우기</button></div></article>';
+    });
+  });
+  h+='<button type="button" class="btn'+(clearArmed?" red":"")+'" data-act="clear">'+(clearArmed?"정말 모두 지울까요? 한 번 더 누르면 지워집니다":"오답노트 전체 비우기")+"</button>";
+  return h;
+}
+
+function favs(){
+  const ids=favIds();
+  let h='<header class="stack"><span class="eyebrow">다시 보고 싶은 문제</span><h1>찜한 문제</h1><p class="sub">'+(ids.length?"모두 "+ids.length+"문제입니다.":"")+"</p></header>";
+  if(!ids.length)return h+'<div class="empty"><p>아직 찜한 문제가 없습니다.<br>문제 화면이나 오답노트에서 ☆ 찜하기를 누르세요.</p></div><button type="button" class="btn primary" data-act="home">문제 풀러 가기</button>';
+  h+='<button type="button" class="btn primary" data-act="favrun">찜한 '+ids.length+"문제 풀기</button>";
+  ids.forEach(id=>{
+    const q=QM[id];
+    h+='<article class="note fav"><div class="tags">'+tag(q)+(S.wrong[id]?'<span class="pill bad">'+S.wrong[id].n+"번 틀림</span>":"")+favBtn(id)+'</div><p class="stem">'+q.q.replace(/<보기>/g,"&lt;보기&gt;")+"</p>";
+    if(q.p||q.b)h+="<details><summary>지문·보기 펼치기</summary>"+body(q)+"</details>";
+    h+='<details><summary>정답·해설 보기</summary><div class="ans" style="margin-top:8px"><div class="real"><span class="k">'+(q.t==="e"?"모범 답안":"정답")+'</span><span class="v">'+(q.t==="e"?q.m:N[q.a]+" "+optText(q,q.a))+"</span></div></div>"+(q.e?'<p class="exp" style="margin-top:8px">'+q.e+"</p>":"")+"</details>";
+    h+='<div class="foot"><button type="button" class="btn small" data-act="fone" data-id="'+id+'">이 문제 풀기</button></div></article>';
+  });
+  return h;
+}
+
+function render(top){
+  app.innerHTML=({home,quiz,result,notes,favs})[V]();
+  const inQuiz=V==="quiz";
+  document.getElementById("tabs").hidden=inQuiz;
+  document.getElementById("tab-home").toggleAttribute("aria-current",false);
+  document.getElementById("tab-notes").toggleAttribute("aria-current",false);
+  document.getElementById("tab-favs").toggleAttribute("aria-current",false);
+  if(V==="favs")document.getElementById("tab-favs").setAttribute("aria-current","page");
+  const fn=favIds().length,fb=document.getElementById("badge-f");fb.textContent=fn;fb.hidden=!fn;
+  if(V==="home"||V==="result")document.getElementById("tab-home").setAttribute("aria-current","page");
+  if(V==="notes")document.getElementById("tab-notes").setAttribute("aria-current","page");
+  const n=wrongIds().length,b=document.getElementById("badge");b.textContent=n;b.hidden=!n;
+  if(top)window.scrollTo(0,0);
+}
+function keepDraft(){const t=document.getElementById("draft");if(t&&ses)ses.draft[ses.ids[ses.i]]=t.value;}
+function showFb(){const f=document.getElementById("fb");if(f&&f.scrollIntoView)f.scrollIntoView({block:"nearest",behavior:"smooth"});}
+function record(id,ok,pick){
+  ses.ans[id]={ok,pick};
+  if(!ok){const w=S.wrong[id]||{n:0};S.wrong[id]={n:w.n+1,pick:pick==null?null:pick,t:Date.now()};}
+  else if(ses.mode==="wrong")delete S.wrong[id];
+  saveSes();
+}
+
+document.addEventListener("click",ev=>{
+  const el=ev.target.closest("[data-act]");if(!el)return;
+  const act=el.dataset.act;
+  if(act!=="clear"&&clearArmed)clearArmed=false;
+  if(act==="home"){V="home";render(true);}
+  else if(act==="notes"){V="notes";render(true);}
+  else if(act==="unit"){const u=UM[el.dataset.k];start(u.roman+" "+u.name,u.k,"unit",Q.filter(q=>q.u===u.k).map(q=>q.id));}
+  else if(act==="all")start("전체 문제","all","all",Q.map(q=>q.id));
+  else if(act==="wrong")start("오답 다시 풀기","wrong","wrong",wrongIds());
+  else if(act==="one")start("오답 다시 풀기","wrong","wrong",[el.dataset.id]);
+  else if(act==="retry")start("틀린 문제 다시 풀기","wrong","wrong",ses.ids.filter(id=>!ses.ans[id].ok));
+  else if(act==="quit"){keepDraft();saveSes();V=ses.mode==="wrong"?"notes":ses.mode==="fav"?"favs":"home";ses=null;render(true);}
+  else if(act==="redo"){const id=ses.ids[ses.i];delete ses.ans[id];delete ses.shown[id];delete ses.draft[id];saveSes();render(true);}
+  else if(act==="favs"){V="favs";render(true);}
+  else if(act==="fav"){keepDraft();const id=el.dataset.id;if(S.fav[id])delete S.fav[id];else S.fav[id]=1;save();render(false);}
+  else if(act==="favrun")start("찜한 문제","fav","fav",favIds());
+  else if(act==="fone")start("찜한 문제","fav","fav",[el.dataset.id]);
+  else if(act==="again")start(ses.title,ses.key,ses.mode,ses.ids);
+  else if(act==="drop"){S.resume=null;save();render(false);}
+  else if(act==="resume"){
+    const ri=resumeInfo();if(!ri)return;const r=ri.r;
+    ses={title:r.title,key:r.key,mode:r.mode,ids:r.ids,i:0,ans:r.ans||{},shown:r.shown||{},draft:{},keep:true};
+    const k=ses.ids.findIndex(id=>!ses.ans[id]);ses.i=k<0?ses.ids.length-1:k;
+    V="quiz";render(true);
+  }
+  else if(act==="pick"){const id=ses.ids[ses.i];if(ses.ans[id])return;const i=+el.dataset.i;record(id,i===QM[id].a,i);render(false);showFb();}
+  else if(act==="show"){keepDraft();ses.shown[ses.ids[ses.i]]=true;saveSes();render(false);showFb();}
+  else if(act==="self"){keepDraft();record(ses.ids[ses.i],el.dataset.ok==="1",null);render(false);}
+  else if(act==="next"){
+    if(ses.i+1<ses.ids.length){ses.i++;saveSes();render(true);}
+    else{
+      if(ses.mode==="unit"||ses.mode==="all"){S.best[ses.key]={s:ses.ids.filter(id=>ses.ans[id].ok).length,t:ses.ids.length};save();}
+      if(ses.keep)S.resume=null;
+      save();V="result";render(true);
+    }
+  }
+  else if(act==="del"){delete S.wrong[el.dataset.id];save();render(false);}
+  else if(act==="clear"){
+    if(clearArmed){S.wrong={};clearArmed=false;save();render(true);}
+    else{clearArmed=true;render(false);}
+  }
+});
+document.addEventListener("change",ev=>{
+  const k=ev.target.dataset&&ev.target.dataset.opt;
+  if(k){S.opt[k]=ev.target.checked;save();}
+});
+render(true);
+</script>
+</body>
+</html>
